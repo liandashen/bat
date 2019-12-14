@@ -4,7 +4,10 @@ use std::str::FromStr;
 
 use atty::{self, Stream};
 
-use crate::clap_app;
+use crate::{
+    clap_app,
+    config::{get_args_from_config_file, get_args_from_env_var},
+};
 use clap::ArgMatches;
 use wild;
 
@@ -13,76 +16,15 @@ use console::Term;
 #[cfg(windows)]
 use ansi_term;
 
-use crate::assets::BAT_THEME_DEFAULT;
-use crate::config::{get_args_from_config_file, get_args_from_env_var};
-use crate::errors::*;
-use crate::inputfile::InputFile;
-use crate::line_range::{LineRange, LineRanges};
-use crate::style::{OutputComponent, OutputComponents, OutputWrap};
-use crate::syntax_mapping::SyntaxMapping;
-use crate::util::transpose;
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum PagingMode {
-    Always,
-    QuitIfOneScreen,
-    Never,
-}
-
-#[derive(Clone)]
-pub struct Config<'a> {
-    /// List of files to print
-    pub files: Vec<InputFile<'a>>,
-
-    /// The explicitly configured language, if any
-    pub language: Option<&'a str>,
-
-    /// Whether or not to show/replace non-printable characters like space, tab and newline.
-    pub show_nonprintable: bool,
-
-    /// The character width of the terminal
-    pub term_width: usize,
-
-    /// The width of tab characters.
-    /// Currently, a value of 0 will cause tabs to be passed through without expanding them.
-    pub tab_width: usize,
-
-    /// Whether or not to simply loop through all input (`cat` mode)
-    pub loop_through: bool,
-
-    /// Whether or not the output should be colorized
-    pub colored_output: bool,
-
-    /// Whether or not the output terminal supports true color
-    pub true_color: bool,
-
-    /// Style elements (grid, line numbers, ...)
-    pub output_components: OutputComponents,
-
-    /// Text wrapping mode
-    pub output_wrap: OutputWrap,
-
-    /// Pager or STDOUT
-    pub paging_mode: PagingMode,
-
-    /// Specifies the lines that should be printed
-    pub line_ranges: LineRanges,
-
-    /// The syntax highlighting theme
-    pub theme: String,
-
-    /// File extension/name mappings
-    pub syntax_mapping: SyntaxMapping,
-
-    /// Command to start the pager
-    pub pager: Option<&'a str>,
-
-    /// Whether or not to use ANSI italics
-    pub use_italic_text: bool,
-
-    /// Lines to highlight
-    pub highlight_lines: Vec<usize>,
-}
+use bat::{
+    assets::BAT_THEME_DEFAULT,
+    errors::*,
+    inputfile::InputFile,
+    line_range::{LineRange, LineRanges},
+    style::{OutputComponent, OutputComponents, OutputWrap},
+    syntax_mapping::SyntaxMapping,
+    Config, PagingMode,
+};
 
 fn is_truecolor_terminal() -> bool {
     env::var("COLORTERM")
@@ -255,12 +197,11 @@ impl App {
                 .or_else(|| env::var("BAT_THEME").ok())
                 .unwrap_or_else(|| String::from(BAT_THEME_DEFAULT)),
             line_ranges: LineRanges::from(
-                transpose(
-                    self.matches
-                        .values_of("line-range")
-                        .map(|vs| vs.map(LineRange::from).collect()),
-                )?
-                .unwrap_or_else(|| vec![]),
+                self.matches
+                    .values_of("line-range")
+                    .map(|vs| vs.map(LineRange::from).collect())
+                    .transpose()?
+                    .unwrap_or_else(|| vec![]),
             ),
             output_components,
             syntax_mapping,
@@ -304,13 +245,15 @@ impl App {
             } else if matches.is_present("plain") {
                 [OutputComponent::Plain].iter().cloned().collect()
             } else {
-                let env_style_components: Option<Vec<OutputComponent>> =
-                    transpose(env::var("BAT_STYLE").ok().map(|style_str| {
+                let env_style_components: Option<Vec<OutputComponent>> = env::var("BAT_STYLE")
+                    .ok()
+                    .map(|style_str| {
                         style_str
                             .split(',')
                             .map(|x| OutputComponent::from_str(&x))
                             .collect::<Result<Vec<OutputComponent>>>()
-                    }))?;
+                    })
+                    .transpose()?;
 
                 matches
                     .value_of("style")

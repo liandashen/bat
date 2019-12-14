@@ -105,6 +105,14 @@ If you happen to use [`fd`](https://github.com/sharkdp/fd), you can use the `-X`
 fd … -X bat
 ```
 
+#### `ripgrep`
+
+With [`batgrep`](https://github.com/eth-p/bat-extras/blob/master/doc/batgrep.md), `bat` can be used as the printer for [`ripgrep`](https://github.com/BurntSushi/ripgrep) search results.
+
+```bash
+batgrep needle src/
+```
+
 #### `tail -f`
 
 `bat` can be combined with `tail -f` to continuously monitor a given file with syntax highlighting.
@@ -114,13 +122,15 @@ tail -f /var/log/pacman.log | bat --paging=never -l log
 Note that we have to switch off paging in order for this to work. We have also specified the syntax
 explicitly (`-l log`), as it can not be auto-detected in this case.
 
-### `git show`
+#### `git`
 
 You can combine `bat` with `git show` to view an older version of a given file with proper syntax
 highlighting:
 ```bash
 git show v0.6.0:src/main.rs | bat -l rs
 ```
+
+Note that syntax highlighting within diffs is currently not supported. If you are looking for this, check out [`delta`](https://github.com/dandavison/delta).
 
 #### `xclip`
 
@@ -132,15 +142,45 @@ bat main.cpp | xclip
 ```
 `bat` will detect that the output is being redirected and print the plain file contents.
 
+#### `man`
+
+`bat` can be used as a colorizing pager for `man`, by setting the
+`MANPAGER` environment variable:
+
+```bash
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+man 2 select
+```
+
+It might also be necessary to set `MANROFFOPT="-c"` if you experience
+formatting problems.
+
+If you prefer to have this bundled in a new command, you can also use [`batman`](https://github.com/eth-p/bat-extras/blob/master/doc/batman.md).
+
+Note that the [Manpage syntax](assets/syntaxes/Manpage.sublime-syntax) is developed in this repository and still needs some work.
+
+#### `prettier` / `shfmt` / `rustfmt`
+
+The [`prettybat`](https://github.com/eth-p/bat-extras/blob/master/doc/prettybat.md) script is a wrapper that will format code and print it with `bat`.
+
+
 ## Installation
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/bat.svg)](https://repology.org/project/bat/versions)
 
 ### On Ubuntu
 *... and other Debian-based Linux distributions.*
 
-Download the latest `.deb` package from the [release page](https://github.com/sharkdp/bat/releases)
+You can install [the Ubuntu `bat` package](https://packages.ubuntu.com/eoan/bat) or [the Debian `bat` package](https://packages.debian.org/sid/bat) since Ubuntu Eoan 19.10 or Debian unstable sid.
+
+```bash
+apt install bat
+```
+
+If you want to run the latest release of bat or if you are on older versions of Ubuntu/Debian, download the latest `.deb` package from the [release page](https://github.com/sharkdp/bat/releases)
 and install it via:
-``` bash
-sudo dpkg -i bat_0.11.0_amd64.deb  # adapt version number and architecture
+```bash
+sudo dpkg -i bat_0.12.1_amd64.deb  # adapt version number and architecture
 ```
 
 ### On Alpine Linux
@@ -163,10 +203,10 @@ pacman -S bat
 
 ### On Fedora
 
-You can install `bat` from the [Fedora Modular](https://docs.fedoraproject.org/en-US/modularity/using-modules/) repository. On Fedora 29 and higher, it is enabled by default. Otherwise, run `dnf install fedora-repos-modular` to set up, and make sure that the `fedora-modular` and `fedora-updates-modular` repos are enabled in `/etc/yum.repos.d`.
+You can install [the `bat` package](https://koji.fedoraproject.org/koji/packageinfo?packageID=27506) from the official [Fedora Modular](https://docs.fedoraproject.org/en-US/modularity/using-modules/) repository.
 
 ```bash
-dnf module install bat
+dnf install bat
 ```
 
 ### On Gentoo Linux
@@ -181,7 +221,7 @@ emerge sys-apps/bat
 ### On Void Linux
 
 You can install `bat` via xbps-install:
-```
+```bash
 xbps-install -S bat
 ```
 
@@ -212,7 +252,7 @@ nix-env -i bat
 
 You can install `bat` with zypper:
 
-```
+```bash
 zypper install bat
 ```
 
@@ -222,6 +262,12 @@ You can install `bat` with [Homebrew](http://braumeister.org/formula/bat):
 
 ```bash
 brew install bat
+```
+
+Or install `bat` with [MacPorts](https://ports.macports.org/port/bat/summary):
+
+```bash
+port install bat
 ```
 
 ### On Windows
@@ -283,15 +329,14 @@ binaries are also available: look for archives with `musl` in the file name.
 
 ### From source
 
-If you want to build `bat` from source, you need Rust 1.31 or
+If you want to build `bat` from source, you need Rust 1.35 or
 higher. You can then use `cargo` to build everything:
 
 ```bash
 cargo install bat
 ```
 
-You may have to install `cmake` and the `libz` development package
-(`libz-dev` or `libz-devel`) in order for the build to succeed.
+On some platforms, you might need to install `llvm` and/or `libclang-dev`.
 
 ## Customization
 
@@ -306,7 +351,7 @@ make the change permanent. Alternatively, use `bat`s
 
 If you want to preview the different themes on a custom file, you can use
 the following command (you need [`fzf`](https://github.com/junegunn/fzf) for this):
-``` bash
+```bash
 bat --list-themes | fzf --preview="bat --theme={} --color=always /path/to/file"
 ```
 
@@ -403,6 +448,16 @@ will hopefully enable both quit-if-one-screen and mouse-wheel scrolling.
 
 If scrolling still doesn't work for you, you can try to pass the `-S` option in addition.
 
+### Dark mode
+
+If you make use of the dark mode feature in macOS, you might want to configure `bat` to use a different
+theme based on the OS theme. The following snippet uses the `default` theme when in the light mode
+and the `GitHub` theme when in the dark mode.
+
+```bash
+alias cat="bat --theme=\$(defaults read -globalDomain AppleInterfaceStyle &> /dev/null && echo default || echo GitHub)"
+```
+
 ## Configuration file
 
 `bat` can also be customized with a configuration file. The location of the file is dependent
@@ -471,7 +526,7 @@ or by setting `BAT_PAGER` to an empty string.
 
 This can be solved by creating a wrapper or adding the following function to your `.bash_profile` file:
 
-```shell
+```bash
 bat() {
     local index
     local args=("$@")
@@ -504,6 +559,18 @@ are supported (and fall back to 8-bit colors).
 Please try a different theme (see `bat --list-themes` for a list). The `OneHalfDark` and
 `OneHalfLight` themes provide grid and line colors that are brighter.
 
+### File encodings
+
+`bat` natively supports UTF-8 as well as UTF-16. For every other file encoding, you may need to
+convert to UTF-8 first because the encodings can typically not be auto-detected. You can `iconv`
+to do so.
+Example: if you have a PHP file in Latin-1 (ISO-8859-1) encoding, you can call:
+``` bash
+iconv -f ISO-8859-1 -t UTF-8 my-file.php | bat
+```
+Note: you might have to use the `-l`/`--language` option if the syntax can not be auto-detected
+by `bat`.
+
 ## Development
 
 ```bash
@@ -512,7 +579,7 @@ git clone --recursive https://github.com/sharkdp/bat
 
 # Build (debug version)
 cd bat
-cargo build
+cargo build --bins
 
 # Run unit tests and integration tests
 cargo test
@@ -524,6 +591,11 @@ cargo install
 bash assets/create.sh
 cargo install -f
 ```
+
+## Maintainers
+
+- [sharkdp](https://github.com/sharkdp)
+- [eth-p](https://github.com/eth-p)
 
 ## Project goals and alternatives
 

@@ -4,7 +4,7 @@
   <a href="https://ci.appveyor.com/project/sharkdp/bat"><img src="https://ci.appveyor.com/api/projects/status/cptsmtbiwbnr2vhf?svg=true"></a>
   <img src="https://img.shields.io/crates/l/bat.svg" alt="license">
   <a href="https://crates.io/crates/bat"><img src="https://img.shields.io/crates/v/bat.svg?colorB=319e8c" alt="Version info"></a><br>
-  A <i>cat(1)</i> clone with syntax highlighting and Git integration.
+  シンタックスハイライトとGitとの連携機能付きの <i>cat(1)</i> クローン。
 </p>
 
 <p align="center">
@@ -65,7 +65,6 @@
 > curl -s https://sh.rustup.rs | bat
 ```
 
-Read from stdin, specify the language explicitly
 標準入力から明示的に言語を指定したい場合
 
 ```bash
@@ -97,7 +96,7 @@ bat f - g  # output 'f', then stdin, then 'g'.
 最新の `.deb` パッケージを[こちら](https://github.com/sharkdp/bat/releases)からダウンロードして、インストールしてください:
 
 ``` bash
-sudo dpkg -i bat_0.11.0_amd64.deb  # adapt version number and architecture
+sudo dpkg -i bat_0.12.1_amd64.deb  # adapt version number and architecture
 ```
 
 ###  Arch Linux
@@ -239,8 +238,6 @@ ansible-galaxy install aeimer.install_bat
 cargo install bat
 ```
 
-
-`cmake` と `libz` 開発パッケージ（`libz-dev` または `libz-devel`）が正しくビルドをするためにインストールする必要があるかもしれません。
 
 ## カスタマイズ
 
@@ -429,7 +426,7 @@ git clone --recursive https://github.com/sharkdp/bat
 
 # Build (debug version)
 cd bat
-cargo build
+cargo build --bins
 
 # Run unit tests and integration tests
 cargo test

@@ -1,13 +1,13 @@
 use std::io::{self, Write};
 use std::path::Path;
 
-use crate::app::{Config, PagingMode};
 use crate::assets::HighlightingAssets;
 use crate::errors::*;
 use crate::inputfile::{InputFile, InputFileReader};
 use crate::line_range::{LineRanges, RangeCheckResult};
 use crate::output::OutputType;
 use crate::printer::{InteractivePrinter, Printer, SimplePrinter};
+use crate::{Config, PagingMode};
 
 pub struct Controller<'a> {
     config: &'a Config<'a>,
@@ -76,7 +76,7 @@ impl<'b> Controller<'b> {
         &self,
         reader: InputFileReader,
         printer: &mut P,
-        writer: &mut Write,
+        writer: &mut dyn Write,
         input_file: InputFile<'a>,
     ) -> Result<()> {
         printer.print_header(writer, input_file)?;
@@ -91,12 +91,15 @@ impl<'b> Controller<'b> {
     fn print_file_ranges<P: Printer>(
         &self,
         printer: &mut P,
-        writer: &mut Write,
+        writer: &mut dyn Write,
         mut reader: InputFileReader,
         line_ranges: &LineRanges,
     ) -> Result<()> {
         let mut line_buffer = Vec::new();
         let mut line_number: usize = 1;
+
+        let mut first_range: bool = true;
+        let mut mid_range: bool = false;
 
         while reader.read_line(&mut line_buffer)? {
             match line_ranges.check(line_number) {
@@ -104,8 +107,20 @@ impl<'b> Controller<'b> {
                     // Call the printer in case we need to call the syntax highlighter
                     // for this line. However, set `out_of_range` to `true`.
                     printer.print_line(true, writer, line_number, &line_buffer)?;
+                    mid_range = false;
                 }
+
                 RangeCheckResult::InRange => {
+                    if self.config.output_components.snip() {
+                        if first_range {
+                            first_range = false;
+                            mid_range = true;
+                        } else if !mid_range {
+                            mid_range = true;
+                            printer.print_snip(writer)?;
+                        }
+                    }
+
                     printer.print_line(false, writer, line_number, &line_buffer)?;
                 }
                 RangeCheckResult::AfterLastRange => {

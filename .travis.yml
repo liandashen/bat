@@ -32,24 +32,25 @@ matrix:
 
     # Minimum Rust supported channel.
     - os: linux
-      rust: 1.31.0
+      rust: 1.35.0
       env: TARGET=x86_64-unknown-linux-gnu
     - os: linux
-      rust: 1.31.0
+      rust: 1.35.0
       env:
         - TARGET=x86_64-unknown-linux-musl
         - CC_x86_64_unknown_linux_musl=/usr/bin/musl-gcc
     - os: osx
-      rust: 1.31.0
+      rust: 1.35.0
       env: TARGET=x86_64-apple-darwin
 
-    # Code formatting check
-    - os: linux
-      rust: nightly
-      # skip the global install step
-      install:
-        - cargo install --debug --force rustfmt-nightly
-      script: cargo fmt -- --check
+    # Disable nightly for now
+    # # Code formatting check
+    # - os: linux
+    #   rust: nightly
+    #   # skip the global install step
+    #   install:
+    #     - cargo install --debug --force rustfmt-nightly
+    #   script: cargo fmt -- --check
 
 sudo: required
 

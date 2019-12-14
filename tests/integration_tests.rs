@@ -451,8 +451,29 @@ fn utf16() {
 
 #[test]
 fn can_print_file_named_cache() {
-    bat()
+    bat_with_config()
         .arg("cache")
+        .assert()
+        .success()
+        .stdout("test\n")
+        .stderr("");
+}
+
+#[test]
+fn can_print_file_named_cache_with_additional_argument() {
+    bat_with_config()
+        .arg("cache")
+        .arg("test.txt")
+        .assert()
+        .success()
+        .stdout("test\nhello world\n")
+        .stderr("");
+}
+
+#[test]
+fn can_print_file_starting_with_cache() {
+    bat_with_config()
+        .arg("cache.c")
         .assert()
         .success()
         .stdout("test\n")
@@ -462,4 +483,24 @@ fn can_print_file_named_cache() {
 #[test]
 fn does_not_print_unwanted_file_named_cache() {
     bat_with_config().arg("cach").assert().failure();
+}
+
+#[test]
+fn snip() {
+    bat()
+        .arg("multiline.txt")
+        .arg("--style=numbers,snip")
+        .arg("--decorations=always")
+        .arg("--line-range=1:2")
+        .arg("--line-range=4:")
+        .arg("--terminal-width=80")
+        .assert()
+        .success()
+        .stdout(
+            "   1 line 1
+   2 line 2
+ ...─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ 8< ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+   4 line 4
+",
+        );
 }

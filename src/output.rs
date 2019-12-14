@@ -6,9 +6,10 @@ use std::process::{Child, Command, Stdio};
 
 use shell_words;
 
-use crate::app::PagingMode;
 use crate::errors::*;
+use crate::PagingMode;
 
+#[derive(Debug)]
 pub enum OutputType {
     Pager(Child),
     Stdout(io::Stdout),
@@ -98,7 +99,7 @@ impl OutputType {
         OutputType::Stdout(io::stdout())
     }
 
-    pub fn handle(&mut self) -> Result<&mut Write> {
+    pub fn handle(&mut self) -> Result<&mut dyn Write> {
         Ok(match *self {
             OutputType::Pager(ref mut command) => command
                 .stdin
